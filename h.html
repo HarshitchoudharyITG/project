@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialApp | Connect with Friends</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#8b5cf6',
+                        dark: '#1e293b',
+                        'dark-light': '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .post-image {
+            background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+        }
+        .gradient-text {
+            background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .story-ring {
+            background: linear-gradient(45deg, #f59e0b, #ec4899, #8b5cf6);
+        }
+        .dark .story-ring {
+            background: linear-gradient(45deg, #f59e0b, #ec4899, #8b5cf6);
+        }
+        .animate-pulse-slow {
+            animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .transition-all {
+            transition: all 0.3s ease;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .story-viewed {
+            background: linear-gradient(45deg, #9ca3af, #6b7280);
+        }
+        .online-indicator {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background-color: #10b981;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        .dark .online-indicator {
+            border-color: #1e293b;
+        }
+        .dropdown-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 20;
+            min-width: 180px;
+            overflow: hidden;
+        }
+        .dark .dropdown-menu {
+            background: #334155;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-dark text-gray-800 dark:text-gray-200">
+    <!-- Top Navigation Bar -->
+    <nav class="bg-white dark:bg-dark-light shadow-sm sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-dove text-primary text-2xl mr-2"></i>
+                        <span class="text-xl font-bold gradient-text">SocialApp</span>
+                    </div>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="flex-1 flex items-center justify-center px-2 lg:ml-6 lg:justify-end">
+                    <div class="max-w-lg w-full lg:max-w-xs">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <input id="searchInput" class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-full leading-5 bg-white dark:bg-dark placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary focus:border-primary dark:border-gray-600" placeholder="Search people, posts, hashtags..." type="search">
+                            <div id="searchResults" class="hidden absolute w-full mt-2 bg-white dark:bg-dark-light rounded-xl shadow-lg z-10 max-h-60 overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Menu -->
+                <div class="flex items-center">
+                    <!-- Dark Mode Toggle -->
+                    <button id="darkModeToggle" class="p-2 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    
+                    <!-- Notifications -->
+                    <div class="ml-4 relative">
+                        <button id="notificationsBtn" class="p-2 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
+                            <i class="fas fa-bell"></i>
+                            <span id="notificationCount" class="notification-badge">3</span>
+                        </button>
+                        <div id="notificationsDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-dark-light rounded-xl shadow-lg z-10">
+                            <div class="p-4 border-b dark:border-gray-700 flex justify-between items-center">
+                                <h3 class="font-semibold">Notifications</h3>
+                                <button id="markAllAsRead" class="text-primary text-sm font-medium">Mark all as read</button>
+                            </div>
+                            <div id="notificationsList" class="max-h-60 overflow-y-auto">
+                                <!-- Notifications will be dynamically added here -->
+                            </div>
+                            <div class="p-2 text-center border-t dark:border-gray-700">
+                                <button class="text-primary text-sm font-medium">See All</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Messages -->
+                    <div class="ml-4 relative">
+                        <button id="messagesBtn" class="p-2 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
+                            <i class="fas fa-envelope"></i>
+                            <span id="messageCount" class="notification-badge">2</span>
+                        </button>
+                        <div id="messagesDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-dark-light rounded-xl shadow-lg z-10">
+                            <div class="p-4 border-b dark:border-gray-700">
+                                <h3 class="font-semibold">Messages</h3>
+                            </div>
+                            <div id="messagesList" class="max-h-60 overflow-y-auto">
+                                <!-- Messages will be dynamically added here -->
+                            </div>
+                            <div class="p-2 text-center border-t dark:border-gray-700">
+                                <button class="text-primary text-sm font-medium">View All Messages</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Profile -->
+                    <div class="ml-4 relative">
+                        <button id="profileBtn" class="flex items-center text-sm rounded-full focus:outline-none">
+                            <img class="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Profile">
+                        </button>
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-dark-light rounded-xl shadow-lg z-10">
+                            <div class="py-1">
+                                <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark">Your Profile</a>
+                                <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark">Settings</a>
+                                <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark">Saved</a>
+                                <div class="border-t dark:border-gray-700"></div>
+                                <a href="#" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark">Logout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Left Sidebar -->
+            <div class="w-full md:w-1/5 mb-6 md:mb-0">
+                <div class="bg-white dark:bg-dark-light rounded-xl shadow-sm p-4 sticky top-24">
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="#" class="flex items-center p-3 text-base font-bold rounded-lg text-primary bg-blue-50 dark:bg-blue-900/20">
+                                <i class="fas fa-home mr-4"></i>
+                                <span>Home</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" id="friendsLink" class="flex items-center p-3 text-base font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-dark">
+                                <i class="fas fa-user-friends mr-4"></i>
+                                <span>Friends</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" id="messagesLink" class="flex items-center p-3 text-base font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-dark">
+                                <i class="fas fa-comment-alt mr-4"></i>
+                                <span>Messages</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" id="notificationsLink" class="flex items-center p-3 text-base font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-dark">
+                                <i class="fas fa-bell mr-4"></i>
+                                <span>Notifications</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" id="profileLink" class="flex items-center p-3 text-base font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-dark">
+                                <i class="fas fa-user mr-4"></i>
+                                <span>Profile</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" id="settingsLink" class="flex items-center p-3 text-base font-normal rounded-lg hover:bg-gray-100 dark:hover:bg-dark">
+                                <i class="fas fa-cog mr-4"></i>
+                                <span>Settings</span>
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold mb-4">Trending Topics</h3>
+                        <div id="trendingTopics" class="space-y-3">
+                            <!-- Trending topics will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="w-full md:w-3/5">
+                <!-- Create Post -->
+                <div class="bg-white dark:bg-dark-light rounded-xl shadow-sm p-4 mb-6">
+                    <div class="flex items-start space-x-4">
+                        <img class="h-10 w-10 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Your profile">
+                        <div class="flex-1">
+                            <input id="postInput" type="text" placeholder="What's on your mind?" class="w-full bg-gray-100 dark:bg-dark border-0 rounded-full px-4 py-3 focus:outline-none focus:ring-1 focus:ring-primary">
+                            <div class="flex justify-between mt-3">
+                                <div class="flex space-x-4">
+                                    <button id="addPhotoBtn" class="flex items-center text-gray-500 hover:text-primary transition-all">
+                                        <i class="fas fa-image mr-2"></i>
+                                        <span>Photo</span>
+                                    </button>
+                                    <button id="addVideoBtn" class="flex items-center text-gray-500 hover:text-primary transition-all">
+                                        <i class="fas fa-video mr-2"></i>
+                                        <span>Video</span>
+                                    </button>
+                                    <button id="addLocationBtn" class="flex items-center text-gray-500 hover:text-primary transition-all">
+                                        <i class="fas fa-map-marker-alt mr-2"></i>
+                                        <span>Location</span>
+                                    </button>
+                                </div>
+                                <button id="postBtn" class="bg-primary text-white px-4 py-1 rounded-full font-medium hover:bg-blue-600 transition-all">Post</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stories -->
+                <div class="bg-white dark:bg-dark-light rounded-xl shadow-sm p-4 mb-6">
+                    <div id="storiesContainer" class="flex space-x-4 overflow-x-auto pb-2">
+                        <!-- Stories will be dynamically added here -->
+                    </div>
+                </div>
+
+                <!-- Feed -->
+                <div id="feed" class="space-y-6">
+                    <!-- Posts will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="w-full md:w-1/5 mt-6 md:mt-0">
+                <div class="bg-white dark:bg-dark-light rounded-xl shadow-sm p-4 sticky top-24">
+                    <h3 class="text-lg font-semibold mb-4">Suggested Users</h3>
+                    <div id="suggestedUsers" class="space-y-4">
+                        <!-- Suggested users will be dynamically added here -->
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold mb-4">Online Friends</h3>
+                        <div id="onlineFriends" class="flex -space-x-2">
+                            <!-- Online friends will be dynamically added here -->
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold mb-4">Recent Activities</h3>
+                        <div id="recentActivities" class="space-y-3 text-sm">
+                            <!-- Recent activities will be dynamically added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Post Modal -->
+    <div id="createPostModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity modal-overlay" aria-hidden="true"></div>
+            <div class="inline-block align-bottom bg-white dark:bg-dark-light rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Create Post</h3>
+                            <div class="mt-2">
+                                <textarea id="modalPostInput" class="w-full h-40 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-dark focus:outline-none focus:ring-1 focus:ring-primary" placeholder="What's on your mind?"></textarea>
+                                <div id="mediaPreview" class="mt-3"></div>
+                                <div class="flex justify-between mt-4">
+                                    <div class="flex space-x-2">
+                                        <button id="modalAddPhoto" class="p-2 rounded-full text-gray-500 hover:text-primary">
+                                            <i class="fas fa-image"></i>
+                                        </button>
+                                        <button id="modalAddVideo" class="p-2 rounded-full text-gray-500 hover:text-primary">
+                                            <i class="fas fa-video"></i>
+                                        </button>
+                                        <button id="modalAddLocation" class="p-2 rounded-full text-gray-500 hover:text-primary">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <button id="modalCancelBtn" class="mr-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Cancel</button>
+                                        <button id="modalPostBtn" class="px-4 py-2 text-sm font-medium text-white bg-primary rounded-full hover:bg-blue-600">Post</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Story Viewer Modal -->
+    <div id="storyViewerModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity modal-overlay" aria-hidden="true"></div>
+            <div class="inline-block align-bottom bg-white dark:bg-dark-light rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 id="storyUser" class="text-lg leading-6 font-medium text-gray-900 dark:text-white"></h3>
+                                <button id="closeStoryBtn" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="mt-2">
+                                <div id="storyContent" class="h-96 w-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white">
+                                    <div class="text-center">
+                                        <i class="fas fa-image text-6xl mb-4"></i>
+                                        <p class="text-xl font-bold">Story Content</p>
+                                    </div>
+                                </div>
+                                <div class="mt-4 flex justify-center">
+                                    <input type="text" placeholder="Send a message..." class="w-full bg-gray-100 dark:bg-dark border-0 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Post Options Modal -->
+    <div id="postOptionsModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity modal-overlay" aria-hidden="true"></div>
+            <div class="inline-block align-bottom bg-white dark:bg-dark-light rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-xs sm:w-full">
+                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Post Options</h3>
+                            <div class="mt-2">
+                                <div class="space-y-2">
+                                    <button id="editPostBtn" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark rounded-lg">Edit Post</button>
+                                    <button id="deletePostBtn" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark rounded-lg text-red-500">Delete Post</button>
+                                    <button id="reportPostBtn" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark rounded-lg">Report Post</button>
+                                    <button id="copyLinkBtn" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark rounded-lg">Copy Link</button>
+                                    <button id="closeOptionsBtn" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark rounded-lg border-t dark:border-gray-700 mt-2">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced data structure for the app
+        const appData = {
+            currentUser: {
+                id: 1,
+                name: "John Doe",
+                username: "johndoe",
+                avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+                bio: "Software Developer | Photography Enthusiast",
+                followers: 245,
+                following: 128
+            },
+            posts: [
+                {
+                    id: 1,
+                    userId: 2,
+                    content: "Just finished my morning hike! The view was absolutely breathtaking. 🏞️ #NatureLover #Hiking",
+                    image: "mountain",
+                    likes: 245,
+                    comments: 36,
+                    shares: 12,
+                    views: "1.2K",
+                    timestamp: "2 hours ago",
+                    liked: false,
+                    saved: false,
+                    commentsList: [
+                        {
+                            id: 1,
+                            userId: 3,
+                            text: "Wow, this looks amazing! Where is this?",
+                            timestamp: "2h",
+                            likes: 5
+                        },
+                        {
+                            id: 2,
+                            userId: 2,
+                            text: "It's at Blue Ridge Mountains! You should definitely check it out.",
+                            timestamp: "1h",
+                            likes: 2
+                        }
+                    ]
+                },
+                {
+                    id: 2,
+                    userId: 3,
+                    content: "Just deployed my new React project! It's a social media dashboard with real-time analytics. So excited to share it with you all! 🚀 #ReactJS #WebDev #Programming",
+                    image: "code",
+                    likes: 189,
+                    comments: 24,
+                    shares: 8,
+                    views: "892",
+                    timestamp: "5 hours ago",
+                    liked: false,
+                    saved: false,
+                    commentsList: []
+                }
+            ],
+            users: [
+                {
+                    id: 1,
+                    name: "John Doe",
+                    username: "johndoe",
+                    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+                    role: "Software Developer",
+                    bio: "Software Developer | Photography Enthusiast",
+                    followers: 245,
+                    following: 128,
+                    isFollowing: false,
+                    isOnline: true
+                },
+                {
+                    id: 2,
+                    name: "Emma Wilson",
+                    username: "emmawilson",
+                    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+                    role: "Photographer",
+                    bio: "Travel Photographer | Nature Lover",
+                    followers: 542,
+                    following: 210,
+                    isFollowing: true,
+                    isOnline: true
+                },
+                {
+                    id: 3,
+                    name: "James Rodriguez",
+                    username: "jamesrod",
+                    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+                    role: "Web Developer",
+                    bio: "Full Stack Developer | React Enthusiast",
+                    followers: 389,
+                    following: 156,
+                    isFollowing: true,
+                    isOnline: false
+                },
+                {
+                    id: 4,
+                    name: "Sophia Lee",
+                    username: "sophialee",
+                    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+                    role: "UI/UX Designer",
+                    bio: "Creating beautiful user experiences",
+                    followers: 621,
+                    following: 302,
+                    isFollowing: false,
+                    isOnline: true
+                },
+                {
+                    id: 5,
+                    name: "Michael Chen",
+                    username: "michaelchen",
+                    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+                    role: "Data Scientist",
+                    bio: "Turning data into insights",
+                    followers: 432,
+                    following: 187,
+                    isFollowing: false,
+                    isOnline: false
+                }
+            ],
+            stories: [
+                {
+                    id: 1,
+                    userId: 1,
+                    type: "image",
+                    content: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    timestamp: "2 hours ago",
+                    viewed: false
+                },
+                {
+                    id: 2,
+                    userId: 2,
+                    type: "image",
+                    content: "https://images.unsplash.com/photo-1469474968028-56623f02e42e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    timestamp: "5 hours ago",
+                    viewed: true
+                },
+                {
+                    id: 3,
+                    userId: 3,
+                    type: "image",
+                    content: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    timestamp: "8 hours ago",
+                    viewed: false
+                },
+                {
+                    id: 4,
+                    userId: 4,
+                    type: "image",
+                    content: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
+                    timestamp: "12 hours ago",
+                    viewed: true
+                }
+            ],
+            notifications: [
+                {
+                    id: 1,
+                    type: "like",
+                    userId: 2,
+                    postId: 1,
+                    text: "liked your post",
+                    timestamp: "10 minutes ago",
+                    read: false
+                },
+                {
+                    id: 2,
+                    type: "comment",
+                    userId: 3,
+                    postId: 1,
+                    text: "commented on your post",
+                    timestamp: "1 hour ago",
+                    read: false
+                },
+                {
+                    id: 3,
+                    type: "follow",
+                    userId: 4,
+                    text: "started following you",
+                    timestamp: "2 hours ago",
+                    read: false
+                },
+                {
+                    id: 4,
+                    type: "like",
+                    userId: 5,
+                    postId: 2,
+                    text: "liked your post",
+                    timestamp: "5 hours ago",
+                    read: true
+                }
+            ],
+            messages: [
+                {
+                    id: 1,
+                    userId: 2,
+                    text: "Hey, are we still meeting tomorrow?",
+                    timestamp: "10:30 AM",
+                    unread: true
+                },
+                {
+                    id: 2,
+                    userId: 3,
+                    text: "Check out this new project I'm working on!",
+                    timestamp: "Yesterday",
+                    unread: true
+                },
+                {
+                    id: 3,
+                    userId: 4,
+                    text: "Loved your recent photos!",
+                    timestamp: "2 days ago",
+                    unread: false
+                }
+            ],
+            trendingTopics: [
+                { name: "#JavaScript", posts: "12.5K" },
+                { name: "#WebDevelopment", posts: "8.2K" },
+                { name: "#ReactJS", posts: "7.9K" },
+                { name: "#TailwindCSS", posts: "6.4K" },
+                { name: "#UIUX", posts: "5.7K" }
+            ],
+            recentActivities: [
+                {
+                    type: "follow",
+                    userId: 5,
+                    text: "started following you",
+                    timestamp: "30 minutes ago"
+                },
+                {
+                    type: "like",
+                    userId: 4,
+                    text: "liked your post",
+                    timestamp: "2 hours ago"
+                },
+                {
+                    type: "comment",
+                    userId: 3,
+                    text: "commented on your photo",
+                    timestamp: "5 hours ago"
+                }
+            ]
+        };
+
+        // DOM Elements
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const htmlElement = document.documentElement;
+        const searchInput = document.getElementById('searchInput');
+        const searchResults = document.getElementById('searchResults');
+        const notificationsBtn = document.getElementById('notificationsBtn');
+        const notificationsDropdown = document.getElementById('notificationsDropdown');
+        const notificationsList = document.getElementById('notificationsList');
+        const messagesBtn = document.getElementById('messagesBtn');
+        const messagesDropdown = document.getElementById('messagesDropdown');
+        const messagesList = document.getElementById('messagesList');
+        const profileBtn = document.getElementById('profileBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+        const postInput = document.getElementById('postInput');
+        const postBtn = document.getElementById('postBtn');
+        const feed = document.getElementById('feed');
+        const suggestedUsersContainer = document.getElementById('suggestedUsers');
+        const recentActivitiesContainer = document.getElementById('recentActivities');
+        const createPostModal = document.getElementById('createPostModal');
+        const modalPostInput = document.getElementById('modalPostInput');
+        const modalPostBtn = document.getElementById('modalPostBtn');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+        const storiesContainer = document.getElementById('storiesContainer');
+        const trendingTopicsContainer = document.getElementById('trendingTopics');
+        const onlineFriendsContainer = document.getElementById('onlineFriends');
+        const storyViewerModal = document.getElementById('storyViewerModal');
+        const closeStoryBtn = document.getElementById('closeStoryBtn');
+        const storyUser = document.getElementById('storyUser');
+        const markAllAsRead = document.getElementById('markAllAsRead');
+        const postOptionsModal = document.getElementById('postOptionsModal');
+        const closeOptionsBtn = document.getElementById('closeOptionsBtn');
+        const editPostBtn = document.getElementById('editPostBtn');
+        const deletePostBtn = document.getElementById('deletePostBtn');
+        const reportPostBtn = document.getElementById('reportPostBtn');
+        const copyLinkBtn = document.getElementById('copyLinkBtn');
+        
+        // Sidebar navigation links
+        const friendsLink = document.getElementById('friendsLink');
+        const messagesLink = document.getElementById('messagesLink');
+        const notificationsLink = document.getElementById('notificationsLink');
+        const profileLink = document.getElementById('profileLink');
+        const settingsLink = document.getElementById('settingsLink');
+
+        // Track active post for options
+        let activePostId = null;
+
+        // Initialize the app
+        function initApp() {
+            renderPosts();
+            renderStories();
+            renderSuggestedUsers();
+            renderRecentActivities();
+            renderNotifications();
+            renderMessages();
+            renderTrendingTopics();
+            renderOnlineFriends();
+            setupEventListeners();
+            
+            // Check for saved dark mode preference
+            if (localStorage.getItem('darkMode') === 'enabled') {
+                htmlElement.classList.add('dark');
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+
+            // Update notification and message counts
+            updateNotificationCount();
+            updateMessageCount();
+        }
+
+        // Render posts to the feed
+        function renderPosts() {
+            feed.innerHTML = '';
+            
+            if (appData.posts.length === 0) {
+                feed.innerHTML = `
+                    <div class="bg-white dark:bg-dark-light rounded-xl shadow-sm p-8 text-center">
+                        <i class="fas fa-newspaper text-4xl text-gray-400 mb-4"></i>
+                        <h3 class="text-xl font-semibold mb-2">No posts yet</h3>
+                        <p class="text-gray-500">Be the first to share something!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            appData.posts.forEach(post => {
+                const postElement = createPostElement(post);
+                feed.appendChild(postElement);
+            });
+        }
+
+        // Create a post element
+        function createPostElement(post) {
+            const user = appData.users.find(u => u.id === post.userId);
+            const postDiv = document.createElement('div');
+            postDiv.className = 'bg-white dark:bg-dark-light rounded-xl shadow-sm overflow-hidden fade-in';
+            postDiv.innerHTML = `
+                <div class="p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <img class="h-10 w-10 rounded-full" src="${user.avatar}" alt="User">
+                                ${user.isOnline ? '<span class="online-indicator"></span>' : ''}
+                            </div>
+                            <div>
+                                <h3 class="font-semibold">${user.name}</h3>
+                                <p class="text-xs text-gray-500">${post.timestamp}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 relative">
+                            <button class="save-btn p-2 rounded-full text-gray-500 hover:text-yellow-500 ${post.saved ? 'text-yellow-500' : ''}">
+                                <i class="fas fa-bookmark"></i>
+                            </button>
+                            <button class="post-options-btn p-2 rounded-full text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" data-post-id="${post.id}">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="mt-3">${post.content}</p>
+                </div>
+                
+                <div class="${post.image === 'mountain' ? 'post-image' : 'bg-gradient-to-r from-purple-500 to-pink-500'} h-64 w-full flex items-center justify-center text-white cursor-pointer">
+                    <div class="text-center">
+                        <i class="fas fa-${post.image === 'mountain' ? 'mountain' : 'laptop-code'} text-6xl mb-4"></i>
+                        <p class="text-xl font-bold">${post.image === 'mountain' ? 'Mountain Landscape' : 'Project Dashboard'}</p>
+                    </div>
+                </div>
+                
+                <div class="px-4 py-3 flex justify-between text-sm text-gray-500 border-b dark:border-gray-700">
+                    <div class="flex items-center space-x-4">
+                        <span><i class="fas fa-heart ${post.liked ? 'text-red-500' : ''} mr-1"></i> <span class="like-count">${post.likes}</span></span>
+                        <span><i class="fas fa-comment mr-1"></i> ${post.comments}</span>
+                        <span><i class="fas fa-share mr-1"></i> ${post.shares}</span>
+                    </div>
+                    <span>${post.views} views</span>
+                </div>
+                
+                <div class="p-2 flex justify-around">
+                    <button class="like-btn flex items-center justify-center w-full py-2 text-gray-500 hover:text-red-500 rounded-lg transition-all">
+                        <i class="fas fa-heart ${post.liked ? 'text-red-500' : ''} mr-2"></i> Like
+                    </button>
+                    <button class="comment-btn flex items-center justify-center w-full py-2 text-gray-500 hover:text-blue-500 rounded-lg transition-all">
+                        <i class="fas fa-comment mr-2"></i> Comment
+                    </button>
+                    <button class="share-btn flex items-center justify-center w-full py-2 text-gray-500 hover:text-green-500 rounded-lg transition-all">
+                        <i class="fas fa-share mr-2"></i> Share
+                    </button>
+                </div>
+                
+                <div class="comments-section hidden px-4 py-3 border-t dark:border-gray-700">
+                    ${post.commentsList.map(comment => {
+                        const commentUser = appData.users.find(u => u.id === comment.userId);
+                        return `
+                            <div class="flex items-start space-x-3 mb-3">
+                                <img class="h-8 w-8 rounded-full" src="${commentUser.avatar}" alt="User">
+                                <div class="flex-1">
+                                    <div class="bg-gray-100 dark:bg-dark rounded-xl p-3">
+                                        <h4 class="font-semibold text-sm">${commentUser.name}</h4>
+                                        <p class="text-sm mt-1">${comment.text}</p>
+                                    </div>
+                                    <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                                        <span>${comment.timestamp}</span>
+                                        <button class="comment-like-btn hover:text-blue-500">Like (${comment.likes})</button>
+                                        <button class="hover:text-blue-500">Reply</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                    
+                    <div class="mt-3 flex items-center space-x-3">
+                        <img class="h-8 w-8 rounded-full" src="${appData.currentUser.avatar}" alt="User">
+                        <div class="flex-1">
+                            <input type="text" placeholder="Write a comment..." class="comment-input w-full bg-gray-100 dark:bg-dark border-0 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary">
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners to the post
+            const likeBtn = postDiv.querySelector('.like-btn');
+            const commentBtn = postDiv.querySelector('.comment-btn');
+            const shareBtn = postDiv.querySelector('.share-btn');
+            const saveBtn = postDiv.querySelector('.save-btn');
+            const commentsSection = postDiv.querySelector('.comments-section');
+            const commentInput = postDiv.querySelector('.comment-input');
+            const likeCount = postDiv.querySelector('.like-count');
+            const postOptionsBtn = postDiv.querySelector('.post-options-btn');
+            
+            likeBtn.addEventListener('click', () => {
+                const icon = likeBtn.querySelector('i');
+                if (post.liked) {
+                    post.likes--;
+                    post.liked = false;
+                    icon.classList.remove('text-red-500');
+                } else {
+                    post.likes++;
+                    post.liked = true;
+                    icon.classList.add('text-red-500');
+                    
+                    // Add notification
+                    if (post.userId !== appData.currentUser.id) {
+                        const newNotification = {
+                            id: appData.notifications.length + 1,
+                            type: "like",
+                            userId: appData.currentUser.id,
+                            postId: post.id,
+                            text: "liked your post",
+                            timestamp: "Just now",
+                            read: false
+                        };
+                        appData.notifications.unshift(newNotification);
+                        renderNotifications();
+                        updateNotificationCount();
+                    }
+                }
+                likeCount.textContent = post.likes;
+            });
+            
+            commentBtn.addEventListener('click', () => {
+                commentsSection.classList.toggle('hidden');
+            });
+            
+            shareBtn.addEventListener('click', () => {
+                post.shares++;
+                alert('Post shared!');
+                
+                // Update the share count in the UI
+                const shareCount = postDiv.querySelector('.share-btn').parentElement.querySelector('span:nth-child(3)');
+                shareCount.innerHTML = `<i class="fas fa-share mr-1"></i> ${post.shares}`;
+            });
+            
+            saveBtn.addEventListener('click', () => {
+                const icon = saveBtn.querySelector('i');
+                post.saved = !post.saved;
+                if (post.saved) {
+                    saveBtn.classList.add('text-yellow-500');
+                } else {
+                    saveBtn.classList.remove('text-yellow-500');
+                }
+            });
+            
+            commentInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && commentInput.value.trim() !== '') {
+                    const newComment = {
+                        id: post.commentsList.length + 1,
+                        userId: appData.currentUser.id,
+                        text: commentInput.value,
+                        timestamp: "Just now",
+                        likes: 0
+                    };
+                    
+                    post.commentsList.push(newComment);
+                    post.comments++;
+                    
+                    // Add notification
+                    if (post.userId !== appData.currentUser.id) {
+                        const newNotification = {
+                            id: appData.notifications.length + 1,
+                            type: "comment",
+                            userId: appData.currentUser.id,
+                            postId: post.id,
+                            text: "commented on your post",
+                            timestamp: "Just now",
+                            read: false
+                        };
+                        appData.notifications.unshift(newNotification);
+                        renderNotifications();
+                        updateNotificationCount();
+                    }
+                    
+                    // Update the comments section
+                    const commentsContainer = commentsSection;
+                    const newCommentElement = document.createElement('div');
+                    newCommentElement.className = 'flex items-start space-x-3 mb-3';
+                    newCommentElement.innerHTML = `
+                        <img class="h-8 w-8 rounded-full" src="${appData.currentUser.avatar}" alt="User">
+                        <div class="flex-1">
+                            <div class="bg-gray-100 dark:bg-dark rounded-xl p-3">
+                                <h4 class="font-semibold text-sm">${appData.currentUser.name}</h4>
+                                <p class="text-sm mt-1">${newComment.text}</p>
+                            </div>
+                            <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                                <span>${newComment.timestamp}</span>
+                                <button class="comment-like-btn hover:text-blue-500">Like (${newComment.likes})</button>
+                                <button class="hover:text-blue-500">Reply</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    commentsSection.insertBefore(newCommentElement, commentsSection.lastElementChild);
+                    commentInput.value = '';
+                    
+                    // Update the comment count in the UI
+                    const commentCount = postDiv.querySelector('.comment-btn').parentElement.querySelector('span:nth-child(2)');
+                    commentCount.innerHTML = `<i class="fas fa-comment mr-1"></i> ${post.comments}`;
+                }
+            });
+            
+            postOptionsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                activePostId = post.id;
+                openPostOptions(post);
+            });
+            
+            return postDiv;
+        }
+
+        // Open post options modal
+        function openPostOptions(post) {
+            postOptionsModal.classList.remove('hidden');
+        }
+
+        // Render stories
+        function renderStories() {
+            storiesContainer.innerHTML = '';
+            
+            // Add current user's story (create story)
+            storiesContainer.innerHTML += `
+                <div class="flex flex-col items-center">
+                    <div class="relative">
+                        <div class="h-16 w-16 rounded-full flex items-center justify-center story-ring p-0.5">
+                            <img class="h-14 w-14 rounded-full border-2 border-white dark:border-dark" src="${appData.currentUser.avatar}" alt="Your story">
+                        </div>
+                        <div class="absolute bottom-0 right-0 h-5 w-5 bg-primary rounded-full border-2 border-white dark:border-dark flex items-center justify-center">
+                            <i class="fas fa-plus text-white text-xs"></i>
+                        </div>
+                    </div>
+                    <span class="text-xs mt-1">Your Story</span>
+                </div>
+            `;
+            
+            // Add other stories
+            appData.stories.forEach(story => {
+                const user = appData.users.find(u => u.id === story.userId);
+                const storyElement = document.createElement('div');
+                storyElement.className = 'flex flex-col items-center cursor-pointer';
+                storyElement.innerHTML = `
+                    <div class="h-16 w-16 rounded-full flex items-center justify-center ${story.viewed ? 'story-viewed' : 'story-ring'} p-0.5">
+                        <img class="h-14 w-14 rounded-full border-2 border-white dark:border-dark" src="${user.avatar}" alt="Story">
+                    </div>
+                    <span class="text-xs mt-1">${user.name.split(' ')[0]}</span>
+                `;
+                
+                storyElement.addEventListener('click', () => {
+                    openStoryViewer(story, user);
+                });
+                
+                storiesContainer.appendChild(storyElement);
+            });
+        }
+
+        // Open story viewer
+        function openStoryViewer(story, user) {
+            storyUser.textContent = `${user.name}'s Story`;
+            storyViewerModal.classList.remove('hidden');
+            
+            // Mark story as viewed
+            if (!story.viewed && story.userId !== appData.currentUser.id) {
+                story.viewed = true;
+                renderStories();
+            }
+        }
+
+        // Render suggested users
+        function renderSuggestedUsers() {
+            suggestedUsersContainer.innerHTML = '';
+            
+            const suggestedUsers = appData.users.filter(user => 
+                user.id !== appData.currentUser.id && !user.isFollowing
+            ).slice(0, 3);
+            
+            if (suggestedUsers.length === 0) {
+                suggestedUsersContainer.innerHTML = '<p class="text-gray-500 text-sm">No suggestions available</p>';
+                return;
+            }
+            
+            suggestedUsers.forEach(user => {
+                const userElement = document.createElement('div');
+                userElement.className = 'flex items-center justify-between';
+                userElement.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="relative">
+                            <img class="h-10 w-10 rounded-full" src="${user.avatar}" alt="User">
+                            ${user.isOnline ? '<span class="online-indicator"></span>' : ''}
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold">${user.name}</h4>
+                            <p class="text-xs text-gray-500">${user.role}</p>
+                        </div>
+                    </div>
+                    <button class="follow-btn text-xs ${user.isFollowing ? 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300' : 'bg-primary text-white'} px-3 py-1 rounded-full hover:bg-blue-600 transition-all">
+                        ${user.isFollowing ? 'Following' : 'Follow'}
+                    </button>
+                `;
+                
+                const followBtn = userElement.querySelector('.follow-btn');
+                followBtn.addEventListener('click', () => {
+                    user.isFollowing = !user.isFollowing;
+                    followBtn.textContent = user.isFollowing ? 'Following' : 'Follow';
+                    followBtn.className = `follow-btn text-xs ${user.isFollowing ? 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300' : 'bg-primary text-white'} px-3 py-1 rounded-full hover:bg-blue-600 transition-all`;
+                    
+                    // Add notification
+                    if (user.isFollowing) {
+                        const newNotification = {
+                            id: appData.notifications.length + 1,
+                            type: "follow",
+                            userId: appData.currentUser.id,
+                            text: "started following you",
+                            timestamp: "Just now",
+                            read: false
+                        };
+                        appData.notifications.unshift(newNotification);
+                        renderNotifications();
+                        updateNotificationCount();
+                    }
+                });
+                
+                suggestedUsersContainer.appendChild(userElement);
+            });
+        }
+
+        // Render recent activities
+        function renderRecentActivities() {
+            recentActivitiesContainer.innerHTML = '';
+            
+            appData.recentActivities.forEach(activity => {
+                const user = appData.users.find(u => u.id === activity.userId);
+                const activityElement = document.createElement('div');
+                activityElement.className = 'flex items-start';
+                
+                let iconClass = '';
+                let iconBgClass = '';
+                
+                switch(activity.type) {
+                    case 'follow':
+                        iconClass = 'fas fa-user-plus text-blue-500';
+                        iconBgClass = 'bg-blue-100 dark:bg-blue-900/30';
+                        break;
+                    case 'like':
+                        iconClass = 'fas fa-heart text-green-500';
+                        iconBgClass = 'bg-green-100 dark:bg-green-900/30';
+                        break;
+                    case 'comment':
+                        iconClass = 'fas fa-comment text-purple-500';
+                        iconBgClass = 'bg-purple-100 dark:bg-purple-900/30';
+                        break;
+                }
+                
+                activityElement.innerHTML = `
+                    <div class="${iconBgClass} p-2 rounded-full mr-3">
+                        <i class="${iconClass} text-xs"></i>
+                    </div>
+                    <div>
+                        <p><span class="font-semibold">${user.name}</span> ${activity.text}</p>
+                        <p class="text-xs text-gray-500">${activity.timestamp}</p>
+                    </div>
+                `;
+                
+                recentActivitiesContainer.appendChild(activityElement);
+            });
+        }
+
+        // Render notifications
+        function renderNotifications() {
+            notificationsList.innerHTML = '';
+            
+            const unreadNotifications = appData.notifications.filter(n => !n.read);
+            
+            if (unreadNotifications.length === 0) {
+                notificationsList.innerHTML = '<div class="p-4 text-center text-gray-500">No new notifications</div>';
+                return;
+            }
+            
+            unreadNotifications.forEach(notification => {
+                const user = appData.users.find(u => u.id === notification.userId);
+                const notificationElement = document.createElement('div');
+                notificationElement.className = 'p-3 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-dark cursor-pointer';
+                notificationElement.innerHTML = `
+                    <div class="flex items-start">
+                        <img class="h-8 w-8 rounded-full mr-3" src="${user.avatar}" alt="User">
+                        <div>
+                            <p class="text-sm"><span class="font-semibold">${user.name}</span> ${notification.text}</p>
+                            <p class="text-xs text-gray-500">${notification.timestamp}</p>
+                        </div>
+                    </div>
+                `;
+                
+                notificationElement.addEventListener('click', () => {
+                    notification.read = true;
+                    renderNotifications();
+                    updateNotificationCount();
+                });
+                
+                notificationsList.appendChild(notificationElement);
+            });
+        }
+
+        // Render messages
+        function renderMessages() {
+            messagesList.innerHTML = '';
+            
+            const unreadMessages = appData.messages.filter(m => m.unread);
+            
+            if (unreadMessages.length === 0) {
+                messagesList.innerHTML = '<div class="p-4 text-center text-gray-500">No new messages</div>';
+                return;
+            }
+            
+            unreadMessages.forEach(message => {
+                const user = appData.users.find(u => u.id === message.userId);
+                const messageElement = document.createElement('div');
+                messageElement.className = 'p-3 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-dark cursor-pointer';
+                messageElement.innerHTML = `
+                    <div class="flex items-start">
+                        <img class="h-10 w-10 rounded-full mr-3" src="${user.avatar}" alt="User">
+                        <div class="flex-1">
+                            <div class="flex justify-between">
+                                <h4 class="font-semibold text-sm">${user.name}</h4>
+                                <span class="text-xs text-gray-500">${message.timestamp}</span>
+                            </div>
+                            <p class="text-sm text-gray-500 truncate">${message.text}</p>
+                        </div>
+                    </div>
+                `;
+                
+                messageElement.addEventListener('click', () => {
+                    message.unread = false;
+                    renderMessages();
+                    updateMessageCount();
+                });
+                
+                messagesList.appendChild(messageElement);
+            });
+        }
+
+        // Render trending topics
+        function renderTrendingTopics() {
+            trendingTopicsContainer.innerHTML = '';
+            
+            appData.trendingTopics.forEach(topic => {
+                const topicElement = document.createElement('div');
+                topicElement.className = 'flex justify-between items-center cursor-pointer hover:bg-gray-50 dark:hover:bg-dark p-2 rounded-lg';
+                topicElement.innerHTML = `
+                    <span class="text-sm font-medium">${topic.name}</span>
+                    <span class="text-xs text-gray-500">${topic.posts} posts</span>
+                `;
+                
+                topicElement.addEventListener('click', () => {
+                    searchInput.value = topic.name;
+                    searchInput.dispatchEvent(new Event('input'));
+                });
+                
+                trendingTopicsContainer.appendChild(topicElement);
+            });
+        }
+
+        // Render online friends
+        function renderOnlineFriends() {
+            onlineFriendsContainer.innerHTML = '';
+            
+            const onlineFriends = appData.users.filter(user => 
+                user.id !== appData.currentUser.id && user.isOnline
+            ).slice(0, 4);
+            
+            onlineFriends.forEach(user => {
+                const friendElement = document.createElement('div');
+                friendElement.className = 'relative';
+                friendElement.innerHTML = `
+                    <img class="h-10 w-10 rounded-full border-2 border-white dark:border-dark-light" src="${user.avatar}" alt="Online friend">
+                    <span class="online-indicator"></span>
+                `;
+                onlineFriendsContainer.appendChild(friendElement);
+            });
+            
+            // Add "+X more" if there are more online friends
+            const totalOnline = appData.users.filter(user => 
+                user.id !== appData.currentUser.id && user.isOnline
+            ).length;
+            
+            if (totalOnline > 4) {
+                const moreElement = document.createElement('div');
+                moreElement.className = 'h-10 w-10 rounded-full border-2 border-white dark:border-dark-light bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-semibold';
+                moreElement.textContent = `+${totalOnline - 4}`;
+                onlineFriendsContainer.appendChild(moreElement);
+            }
+        }
+
+        // Update notification count
+        function updateNotificationCount() {
+            const unreadCount = appData.notifications.filter(n => !n.read).length;
+            const notificationCount = document.getElementById('notificationCount');
+            
+            if (unreadCount > 0) {
+                notificationCount.textContent = unreadCount;
+                notificationCount.classList.remove('hidden');
+            } else {
+                notificationCount.classList.add('hidden');
+            }
+        }
+
+        // Update message count
+        function updateMessageCount() {
+            const unreadCount = appData.messages.filter(m => m.unread).length;
+            const messageCount = document.getElementById('messageCount');
+            
+            if (unreadCount > 0) {
+                messageCount.textContent = unreadCount;
+                messageCount.classList.remove('hidden');
+            } else {
+                messageCount.classList.add('hidden');
+            }
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Dark mode toggle
+            darkModeToggle.addEventListener('click', () => {
+                htmlElement.classList.toggle('dark');
+                
+                if (htmlElement.classList.contains('dark')) {
+                    darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                    localStorage.setItem('darkMode', 'enabled');
+                } else {
+                    darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                    localStorage.setItem('darkMode', 'disabled');
+                }
+            });
+            
+            // Search functionality
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                
+                if (query.length > 0) {
+                    searchResults.classList.remove('hidden');
+                    
+                    // Filter users and posts based on query
+                    const filteredUsers = appData.users.filter(user => 
+                        user.name.toLowerCase().includes(query) || 
+                        user.username.toLowerCase().includes(query)
+                    );
+                    
+                    const filteredPosts = appData.posts.filter(post => 
+                        post.content.toLowerCase().includes(query)
+                    );
+                    
+                    let resultsHTML = '';
+                    
+                    if (filteredUsers.length > 0) {
+                        resultsHTML += '<div class="p-3 border-b dark:border-gray-700"><h4 class="font-semibold text-sm">Users</h4></div>';
+                        filteredUsers.forEach(user => {
+                            resultsHTML += `
+                                <div class="p-3 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-dark cursor-pointer">
+                                    <div class="flex items-center">
+                                        <img class="h-8 w-8 rounded-full mr-3" src="${user.avatar}" alt="User">
+                                        <div>
+                                            <p class="text-sm font-medium">${user.name}</p>
+                                            <p class="text-xs text-gray-500">${user.role}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    if (filteredPosts.length > 0) {
+                        resultsHTML += '<div class="p-3 border-b dark:border-gray-700"><h4 class="font-semibold text-sm">Posts</h4></div>';
+                        filteredPosts.forEach(post => {
+                            const user = appData.users.find(u => u.id === post.userId);
+                            resultsHTML += `
+                                <div class="p-3 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-dark cursor-pointer">
+                                    <div class="flex items-start">
+                                        <img class="h-8 w-8 rounded-full mr-3" src="${user.avatar}" alt="User">
+                                        <div>
+                                            <p class="text-sm font-medium">${user.name}</p>
+                                            <p class="text-sm text-gray-500 truncate">${post.content}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    
+                    if (filteredUsers.length === 0 && filteredPosts.length === 0) {
+                        resultsHTML = '<div class="p-4 text-center text-gray-500">No results found</div>';
+                    }
+                    
+                    searchResults.innerHTML = resultsHTML;
+                } else {
+                    searchResults.classList.add('hidden');
+                }
+            });
+            
+            // Close search results when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.classList.add('hidden');
+                }
+            });
+            
+            // Notifications dropdown
+            notificationsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notificationsDropdown.classList.toggle('hidden');
+                messagesDropdown.classList.add('hidden');
+                profileDropdown.classList.add('hidden');
+            });
+            
+            // Mark all as read
+            markAllAsRead.addEventListener('click', () => {
+                appData.notifications.forEach(notification => {
+                    notification.read = true;
+                });
+                renderNotifications();
+                updateNotificationCount();
+            });
+            
+            // Messages dropdown
+            messagesBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                messagesDropdown.classList.toggle('hidden');
+                notificationsDropdown.classList.add('hidden');
+                profileDropdown.classList.add('hidden');
+            });
+            
+            // Profile dropdown
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('hidden');
+                notificationsDropdown.classList.add('hidden');
+                messagesDropdown.classList.add('hidden');
+            });
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', () => {
+                notificationsDropdown.classList.add('hidden');
+                messagesDropdown.classList.add('hidden');
+                profileDropdown.classList.add('hidden');
+            });
+            
+            // Create post functionality
+            postInput.addEventListener('focus', () => {
+                createPostModal.classList.remove('hidden');
+            });
+            
+            modalCancelBtn.addEventListener('click', () => {
+                createPostModal.classList.add('hidden');
+                modalPostInput.value = '';
+            });
+            
+            modalPostBtn.addEventListener('click', () => {
+                const content = modalPostInput.value.trim();
+                
+                if (content) {
+                    const newPost = {
+                        id: appData.posts.length + 1,
+                        userId: appData.currentUser.id,
+                        content: content,
+                        image: "code",
+                        likes: 0,
+                        comments: 0,
+                        shares: 0,
+                        views: "0",
+                        timestamp: "Just now",
+                        liked: false,
+                        saved: false,
+                        commentsList: []
+                    };
+                    
+                    appData.posts.unshift(newPost);
+                    renderPosts();
+                    
+                    createPostModal.classList.add('hidden');
+                    modalPostInput.value = '';
+                }
+            });
+            
+            // Close story viewer
+            closeStoryBtn.addEventListener('click', () => {
+                storyViewerModal.classList.add('hidden');
+            });
+            
+            // Post options functionality
+            closeOptionsBtn.addEventListener('click', () => {
+                postOptionsModal.classList.add('hidden');
+            });
+            
+            editPostBtn.addEventListener('click', () => {
+                const post = appData.posts.find(p => p.id === activePostId);
+                if (post) {
+                    alert(`Editing post: ${post.content}`);
+                    postOptionsModal.classList.add('hidden');
+                }
+            });
+            
+            deletePostBtn.addEventListener('click', () => {
+                if (confirm("Are you sure you want to delete this post?")) {
+                    appData.posts = appData.posts.filter(p => p.id !== activePostId);
+                    renderPosts();
+                    postOptionsModal.classList.add('hidden');
+                }
+            });
+            
+            reportPostBtn.addEventListener('click', () => {
+                alert("Post reported to moderators");
+                postOptionsModal.classList.add('hidden');
+            });
+            
+            copyLinkBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(`https://socialapp.com/post/${activePostId}`);
+                alert("Post link copied to clipboard");
+                postOptionsModal.classList.add('hidden');
+            });
+            
+            // Sidebar navigation links
+            friendsLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert("Friends page would open here");
+            });
+            
+            messagesLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                messagesDropdown.classList.toggle('hidden');
+                notificationsDropdown.classList.add('hidden');
+                profileDropdown.classList.add('hidden');
+            });
+            
+            notificationsLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                notificationsDropdown.classList.toggle('hidden');
+                messagesDropdown.classList.add('hidden');
+                profileDropdown.classList.add('hidden');
+            });
+            
+            profileLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert("Profile page would open here");
+            });
+            
+            settingsLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert("Settings page would open here");
+            });
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
